@@ -349,6 +349,9 @@ def parse_generic(html):
             # "Ekipa A : Ekipa B" u istom elementu
             if ":" in v:
                 first, second = (normalize(x) for x in v.split(":", 1))
+                if second.lower() in ("тел", "tel"):
+                    names.append(v)
+                    continue
                 if (
                     first and second
                     and not first.isdigit() and not second.isdigit()
@@ -376,17 +379,261 @@ def parse_generic(html):
     return output
 
 
+
+# ============================================================
+# PARSER 3 - STRANICA TAKMICENJA (zaglavlje kola + redovi)
+#
+# Izgled stranice:
+#   1. коло(1)                      03.11.2026     <- zaglavlje kola
+#   4807  КК Младост : СЛОБОДАН                     <- red utakmice
+#   4808  КК Парагон : ОКК Београд   56 : 100       <- red sa rezultatom
+#   4817  КК Младост : КК Борац Земун               <- najava, a u
+#         27.11.2026 / 16:00 / dvorana / sudije        prosirenom delu su
+#                                                      datum i vreme
+# Pocetak je cist tekst po redosledu u dokumentu, pa ne zavisi od
+# tacne HTML strukture.
+# ============================================================
+
+DATE_FULL_RE = re.compile(r"^\s*(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?\s*$")
+DATE_IN_RE = re.compile(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})")
+TIME_ONLY_RE = re.compile(r"^\s*([01]?\d|2[0-3])[:.]([0-5]\d)\s*$")
+TEAM_PAIR_RE = re.compile(r"^(.+?)\s+:\s+(.+)$")
+SCORE_SPACED_RE = re.compile(r"^\s*(\d{1,3})\s*:\s*(\d{1,3})\s*$")
+ROUND_HINT_RE = re.compile(r"коло|kolo|\(\s*\d+\s*\)\s*$", re.IGNORECASE)
+
+
+def page_events(soup):
+    """Tekst i linkovi utakmica u redosledu u kom stoje u dokumentu."""
+    events = []
+    for node in soup.descendants:
+        name = getattr(node, "name", None)
+
+        if name == "a":
+            m = LINK_RE.search(node.get("href", "") or "")
+            if m:
+                events.append(("link", m.group(1)))
+            continue
+
+        if name is not None:
+            continue
+
+        parent = node.parent.name if node.parent else ""
+        if parent in ("script", "style", "title", "head", "noscript"):
+            continue
+        if type(node).__name__ in ("Comment", "Doctype", "CData"):
+            continue
+
+        text = normalize(str(node))
+        if text:
+            events.append(("text", text))
+
+    # spoji "A" ":" "B" koji su razbijeni u tri elementa
+    merged = []
+    i = 0
+    while i < len(events):
+        kind, value = events[i]
+        if (
+            kind == "text" and value == ":" and merged
+            and merged[-1][0] == "text" and i + 1 < len(events)
+            and events[i + 1][0] == "text"
+        ):
+            merged[-1] = ("text", f"{merged[-1][1]} : {events[i + 1][1]}")
+            i += 2
+            continue
+        merged.append((kind, value))
+        i += 1
+
+    return merged
+
+
+def competition_page_id(url):
+    m = re.search(r"takmicenje(\d+)", url or "")
+    return m.group(1) if m else "x"
+
+
+def parse_competition(html, url=None):
+    soup = BeautifulSoup(html, "html.parser")
+    events = page_events(soup)
+
+    page_title = ""
+    if soup.title and soup.title.string:
+        page_title = normalize(soup.title.string)
+
+    # ime takmicenja: prvi tekst sa "/" pre prvog zaglavlja kola
+    competition = ""
+    for kind, value in events:
+        if kind != "text":
+            continue
+        if ROUND_HINT_RE.search(value) and DATE_IN_RE.search(value):
+            break
+        if "/" in value and 8 <= len(value) <= 150 and ":" not in value:
+            competition = value
+            break
+    if not competition:
+        competition = page_title
+
+    rows = []
+    row = None
+    pending_link = None
+    round_date = None
+    prev_text = ""
+    expect_time = False
+
+    def finish():
+        nonlocal row
+        if row is not None:
+            rows.append(row)
+        row = None
+
+    for index, (kind, value) in enumerate(events):
+
+        if kind == "link":
+            if row is not None and row["mid"] is None:
+                row["mid"] = value
+            else:
+                pending_link = value
+            continue
+
+        text = value
+
+        if any(w in text.lower() for w in BAD_WORDS) and not TEAM_PAIR_RE.match(text):
+            prev_text = text
+            continue
+
+        # ---- datum ----
+        date_match = DATE_FULL_RE.match(text)
+        if date_match:
+            day, month, year = (int(date_match.group(i)) for i in (1, 2, 3))
+            parsed = valid_date(day, month, year)
+
+            next_text = ""
+            if index + 1 < len(events) and events[index + 1][0] == "text":
+                next_text = events[index + 1][1]
+
+            # datum u prosirenom delu reda ima vreme odmah iza sebe;
+            # datum zaglavlja kola ima ispred sebe naziv kola
+            is_header = bool(ROUND_HINT_RE.search(prev_text)) or not (
+                row is not None and TIME_ONLY_RE.match(next_text)
+            )
+
+            if parsed and not is_header and row is not None:
+                row["date"] = parsed
+                expect_time = True
+            elif parsed:
+                finish()
+                round_date = parsed
+                pending_link = None
+                expect_time = False
+
+            prev_text = text
+            continue
+
+        # zaglavlje u jednom elementu: "1. коло(1) 03.11.2026"
+        if (
+            DATE_IN_RE.search(text) and ROUND_HINT_RE.search(text)
+            and not TEAM_PAIR_RE.match(text)
+        ):
+            dm = DATE_IN_RE.search(text)
+            parsed = valid_date(int(dm.group(1)), int(dm.group(2)), int(dm.group(3)))
+            if parsed:
+                finish()
+                round_date = parsed
+                pending_link = None
+                expect_time = False
+            prev_text = text
+            continue
+
+        # ---- vreme (odmah iza datuma u prosirenom delu) ----
+        if expect_time and TIME_ONLY_RE.match(text) and row is not None:
+            tm = TIME_ONLY_RE.match(text)
+            row["time"] = f"{int(tm.group(1)):02d}:{tm.group(2)}"
+            expect_time = False
+            prev_text = text
+            continue
+
+        # ---- rezultat "56 : 100" ----
+        score = SCORE_SPACED_RE.match(text)
+        if score and row is not None and row["home_score"] is None:
+            row["home_score"] = score.group(1)
+            row["away_score"] = score.group(2)
+            prev_text = text
+            continue
+
+        # ---- red utakmice "Domacin : Gost" ----
+        pair = TEAM_PAIR_RE.match(text)
+        if pair:
+            home = normalize(pair.group(1))
+            away = normalize(pair.group(2))
+            if (
+                home and away
+                and not DIGITS_RE.fullmatch(home)
+                and not DIGITS_RE.fullmatch(away)
+                and not is_bad_team(home)
+                and not is_bad_team(away)
+            ):
+                finish()
+                row = {
+                    "mid": pending_link,
+                    "home": home,
+                    "away": away,
+                    "home_score": None,
+                    "away_score": None,
+                    "date": None,
+                    "time": None,
+                    "round_date": round_date,
+                    "number": prev_text if re.fullmatch(r"\d{1,6}", prev_text or "") else None,
+                }
+                pending_link = None
+                expect_time = False
+
+        prev_text = text
+
+    finish()
+
+    page_id = competition_page_id(url)
+    output = []
+
+    for r in rows:
+        match_date = r["date"] or r["round_date"]
+        if not match_date:
+            continue
+
+        mid = r["mid"]
+        fallback = False
+        if not mid:
+            if not r["number"]:
+                continue
+            mid = f"p{page_id}-{r['number']}"
+            fallback = True
+
+        item = build_item(
+            mid, match_date, competition, r["home"], r["away"],
+            r["home_score"], r["away_score"], r["time"],
+        )
+        if fallback and url:
+            item["url"] = url
+
+        output.append(item)
+
+    return output
+
+
 # ============================================================
 # KOMBINOVANJE PARSERA
 # ============================================================
 
-def parse_all(html):
+def parse_all(html, url=None):
     matches = {}
 
     for item in parse_standard(html):
         matches[item["id"]] = item
 
-    for item in parse_generic(html):
+    competition_items = parse_competition(html, url)
+
+    # parse_generic samo kao rezerva ako novi parser nista ne nadje
+    extra = competition_items if competition_items else parse_generic(html)
+
+    for item in extra:
         mid = item["id"]
 
         if mid not in matches:
@@ -401,6 +648,33 @@ def parse_all(html):
 
     return list(matches.values())
 
+
+def unparsed_rows(html, parsed_ids, limit=6):
+    """Vraca HTML redova utakmica koje parser NIJE uspeo da procita."""
+    soup = BeautifulSoup(html, "html.parser")
+    rows = []
+    for mid, links in extract_match_ids(soup).items():
+        if mid in parsed_ids:
+            continue
+        node = links[0]
+        best = node
+        for _ in range(10):
+            parent = node.parent
+            if parent is None or parent.name in ("body", "html", "[document]"):
+                break
+            ids = set()
+            for a in parent.find_all("a", href=True):
+                m = LINK_RE.search(a["href"])
+                if m:
+                    ids.add(m.group(1))
+            if ids - {mid}:
+                break
+            best = parent
+            node = parent
+        rows.append((mid, str(best)))
+        if len(rows) >= limit:
+            break
+    return rows
 
 # ============================================================
 # PRONALAZENJE STRANICA TAKMICENJA
@@ -493,6 +767,31 @@ def merge_match(previous, current):
     return merged
 
 
+
+def dedupe(matches):
+    """Isti datum + iste ekipe = ista utakmica; pravi ID pobedjuje rezervni."""
+    best = {}
+    for m in matches:
+        key = (m.get("date"), m.get("home"), m.get("away"))
+        cur = best.get(key)
+        if cur is None:
+            best[key] = m
+            continue
+        cur_fb = str(cur.get("id", "")).startswith("p")
+        new_fb = str(m.get("id", "")).startswith("p")
+        if cur_fb and not new_fb:
+            for k in ("home_score", "away_score", "time"):
+                if m.get(k) in (None, "") and cur.get(k) not in (None, ""):
+                    m[k] = cur[k]
+            best[key] = m
+        elif new_fb and not cur_fb:
+            for k in ("home_score", "away_score", "time"):
+                if cur.get(k) in (None, "") and m.get(k) not in (None, ""):
+                    cur[k] = m[k]
+        else:
+            best[(key, m.get("id"))] = m
+    return list(best.values())
+
 # ============================================================
 # GLAVNA FUNKCIJA
 # ============================================================
@@ -530,7 +829,7 @@ def main():
                     html, encoding="utf-8"
                 )
 
-            matches = parse_all(html)
+            matches = parse_all(html, url)
 
             upcoming = sum(1 for m in matches if m.get("home_score") is None)
             print(
@@ -547,6 +846,10 @@ def main():
                         f"{m['home']} - {m['away']} ({m['id']})"
                     )
                     shown += 1
+
+            parsed_ids = {m["id"] for m in matches}
+            for mid, row in unparsed_rows(html, parsed_ids):
+                print(f"   NEPROCITANO {mid}: {normalize(row)[:700]}")
 
             for match in matches:
                 mid = match["id"]
@@ -580,7 +883,7 @@ def main():
         old[mid] = merge_match(old.get(mid), match)
 
     merged = sorted(
-        old.values(),
+        dedupe(list(old.values())),
         key=lambda m: (m.get("date", ""), str(m.get("id", ""))),
         reverse=True,
     )[:MAX_MATCHES]
