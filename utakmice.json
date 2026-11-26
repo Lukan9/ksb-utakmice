@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T22:13:17+00:00",
+  "updated": "2026-11-26T23:15:45+00:00",
   "matches": [
     {
       "id": "112803",
@@ -40497,10 +40497,21 @@
       "competition": "SEASON 2026/2027",
       "home": "KK Sava",
       "away": "KK LA Basket",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "82",
+      "away_score": "89",
       "url": "https://www.ksb.rs/utakmica111015/",
       "time": "21:00"
+    },
+    {
+      "id": "110840",
+      "date": "2026-11-26",
+      "competition": "SEASON 2026/2027",
+      "home": "OKK Beograd",
+      "away": "77 : 67",
+      "home_score": "77",
+      "away_score": "67",
+      "url": "https://www.ksb.rs/utakmica110840/",
+      "time": "21:20"
     },
     {
       "id": "110836",
@@ -40522,6 +40533,16 @@
       "home_score": "62",
       "away_score": "45",
       "url": "https://www.ksb.rs/utakmica110570/"
+    },
+    {
+      "id": "109774",
+      "date": "2026-11-26",
+      "competition": "млађи пионири/2. Београдска лига У13",
+      "home": "КК Риверс БМ",
+      "away": "КК Сурчин Добановци 2",
+      "home_score": "48",
+      "away_score": "47",
+      "url": "https://www.ksb.rs/utakmica109774/"
     },
     {
       "id": "109773",
@@ -40562,8 +40583,8 @@
       "competition": "СЕЗОНА 2026/2027",
       "home": "ККЖ Раднички",
       "away": "ЖКК Мега Баскет",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "51",
+      "away_score": "22",
       "url": "https://www.ksb.rs/utakmica106713/",
       "time": "22:15"
     },
@@ -51131,28 +51152,6 @@
       "away_score": "68",
       "url": "https://www.ksb.rs/utakmica105807/",
       "time": "15:00"
-    },
-    {
-      "id": "105800",
-      "date": "2026-09-20",
-      "competition": "SEASON 2026/2027",
-      "home": "KK Zemun Fitofarmacija",
-      "away": "KK Beovuk 72",
-      "home_score": "71",
-      "away_score": "78",
-      "url": "https://www.ksb.rs/utakmica105800/",
-      "time": "20:30"
-    },
-    {
-      "id": "105799",
-      "date": "2026-09-20",
-      "competition": "SEASON 2026/2027",
-      "home": "KK Veba Basket",
-      "away": "KK Zitko Basket",
-      "home_score": "83",
-      "away_score": "53",
-      "url": "https://www.ksb.rs/utakmica105799/",
-      "time": "09:20"
     }
   ]
 }
