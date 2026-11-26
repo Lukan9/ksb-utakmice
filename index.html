@@ -119,6 +119,8 @@
     white-space: nowrap; letter-spacing: .02em;
   }
   .score.none { font-size: .8rem; font-family: var(--font); font-weight: 600; background: var(--ball); color: #fff; padding: 5px 8px; }
+  button.more { display: block; width: 100%; margin: 12px 0 24px; padding: 13px; font: 600 1rem var(--font); background: var(--night); color: #f6ead0; border: 0; border-radius: 10px; cursor: pointer; }
+  button.more[hidden] { display: none; }
   .state { text-align: center; color: var(--muted); padding: 28px 10px; line-height: 1.5; }
   .state strong { color: var(--ink); display: block; margin-bottom: 4px; }
   @media (prefers-reduced-motion: no-preference) {
@@ -140,7 +142,7 @@
     </div>
     <div class="field date">
       <label for="d">Datum</label>
-      <input id="d" type="text" inputmode="decimal" placeholder="20.11" autocomplete="off">
+      <input id="d" type="text" inputmode="decimal" placeholder="20.11 ili 20.11.2026" autocomplete="off">
     </div>
   </div>
   <div class="tabs" role="group" aria-label="Prikaz utakmica">
@@ -160,6 +162,7 @@
 <main>
   <ul class="list" id="list" aria-live="polite"></ul>
   <div class="state" id="state"></div>
+  <button class="more" id="more" type="button" hidden>Prikaži još</button>
 </main>
 
 <script>
@@ -179,14 +182,32 @@
     return out.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
   }
 
-  var DATE_RE = /(\d{1,2})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{2,4}))?\.?/;
+  // Datum: 20.11 | 20,11 | 20 11 | 20-11-2026 | 20 (samo dan)
+  // loose=true za polje "Datum" (iOS decimalna tastatura daje zarez),
+  // loose=false za tekst u polju ekipa (da ne hvata slucajne brojeve)
+  var DATE_STRICT = /(\d{1,2})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{2,4}))?\.?/;
+  var DATE_LOOSE  = /(\d{1,2})\s*[.,\-\/\s]\s*(\d{1,2})(?:\s*[.,\-\/\s]\s*(\d{2,4}))?\s*[.,]?/;
 
-  function parseDate(text) {
-    var m = String(text || "").match(DATE_RE);
-    if (!m) return null;
-    var y = m[3] ? parseInt(m[3], 10) : null;
-    if (y !== null && y < 100) y += 2000;
-    return { d: parseInt(m[1], 10), m: parseInt(m[2], 10), y: y, raw: m[0] };
+  function parseDate(text, loose) {
+    var s = String(text || "");
+    var m = s.match(loose ? DATE_LOOSE : DATE_STRICT);
+    if (m) {
+      var mo = parseInt(m[2], 10);
+      var dd = parseInt(m[1], 10);
+      if (mo >= 1 && mo <= 12 && dd >= 1 && dd <= 31) {
+        var y = m[3] ? parseInt(m[3], 10) : null;
+        if (y !== null && y < 100) y += 2000;
+        return { d: dd, m: mo, y: y, raw: m[0] };
+      }
+    }
+    if (loose) {
+      var only = s.match(/^\s*(\d{1,2})\s*[.,]?\s*$/);   // samo dan, npr. "20"
+      if (only) {
+        var d1 = parseInt(only[1], 10);
+        if (d1 >= 1 && d1 <= 31) return { d: d1, m: null, y: null, raw: only[0] };
+      }
+    }
+    return null;
   }
 
   var all = [];
@@ -211,6 +232,9 @@
   var $list = document.getElementById("list");
   var $state = document.getElementById("state");
   var $count = document.getElementById("count");
+  var $more = document.getElementById("more");
+  var PAGE = 40;
+  var shownCount = PAGE;
 
   function fmtDate(iso) {
     var p = iso.split("-");
@@ -259,10 +283,10 @@
 
   function render() {
     var text = $q.value;
-    var date = parseDate($d.value);
+    var date = parseDate($d.value, true);
     // datum se može ukucati i u polje za ekipe: "zvezda partizan 20.11"
     if (!date) {
-      var inline = parseDate(text);
+      var inline = parseDate(text, false);
       if (inline) { date = inline; text = text.replace(inline.raw, " "); }
     }
     var tokens = norm(text).split(" ").filter(function (t) {
@@ -271,7 +295,8 @@
     var searching = tokens.length > 0 || date !== null || $d.value.trim() !== "";
 
     var hasUpcoming = all.some(isUpcoming);
-    var activeMode = mode || (hasUpcoming ? "upcoming" : "played");
+    // kad se nesto trazi (ekipa/datum), a prikaz nije rucno izabran -> trazi u SVIM utakmicama
+    var activeMode = mode || (searching ? "all" : (hasUpcoming ? "upcoming" : "played"));
     Array.prototype.forEach.call(document.querySelectorAll("button.tab"), function (b) {
       b.setAttribute("aria-pressed", b.getAttribute("data-mode") === activeMode ? "true" : "false");
     });
@@ -281,7 +306,8 @@
       if (activeMode === "played" && isUpcoming(m)) return false;
       if (date) {
         var p = m.date.split("-");
-        if (parseInt(p[2], 10) !== date.d || parseInt(p[1], 10) !== date.m) return false;
+        if (parseInt(p[2], 10) !== date.d) return false;
+        if (date.m !== null && parseInt(p[1], 10) !== date.m) return false;
         if (date.y !== null && parseInt(p[0], 10) !== date.y) return false;
       }
       if (tokens.length) {
@@ -301,8 +327,7 @@
       return key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0;           // odigrane: najnovije prve
     });
 
-    var LIMIT = searching ? 100 : 30;
-    var shown = res.slice(0, LIMIT);
+    var shown = res.slice(0, shownCount);
     $list.textContent = "";
     shown.forEach(function (m) { $list.appendChild(card(m)); });
 
@@ -322,12 +347,22 @@
         $state.appendChild(document.createTextNode("Probaj samo deo naziva (npr. „zvezda“), drugi datum (npr. 20.11) ili drugi prikaz (Predstojeće / Odigrane / Sve)."));
       }
     } else {
-      $count.textContent = searching
-        ? res.length + (res.length > LIMIT ? " rezultata (prikazano " + LIMIT + ")" : " rezultata")
-        : (activeMode === "upcoming" ? "Predstojeće utakmice" : activeMode === "played" ? "Poslednje utakmice" : "Sve utakmice");
+      var label = searching
+        ? res.length + " rezultata"
+        : (activeMode === "upcoming" ? "Predstojeće utakmice" : activeMode === "played" ? "Odigrane utakmice" : "Sve utakmice") + " (" + res.length + ")";
+      $count.textContent = label + (res.length > shown.length ? " · prikazano " + shown.length : "");
       $state.textContent = "";
     }
+
+    if (res.length > shown.length) {
+      $more.hidden = false;
+      $more.textContent = "Prikaži još (" + (res.length - shown.length) + ")";
+    } else {
+      $more.hidden = true;
+    }
   }
+
+  function resetAndRender() { shownCount = PAGE; render(); }
 
   function load(manual) {
     var $btn = document.getElementById("refresh");
@@ -356,13 +391,14 @@
   }
 
   Array.prototype.forEach.call(document.querySelectorAll("button.tab"), function (b) {
-    b.addEventListener("click", function () { mode = b.getAttribute("data-mode"); render(); });
+    b.addEventListener("click", function () { mode = b.getAttribute("data-mode"); resetAndRender(); });
   });
   document.getElementById("refresh").addEventListener("click", function () { load(true); });
-  $q.addEventListener("input", render);
-  $d.addEventListener("input", render);
+  $q.addEventListener("input", resetAndRender);
+  $d.addEventListener("input", resetAndRender);
+  $more.addEventListener("click", function () { shownCount += 50; render(); });
   document.getElementById("clear").addEventListener("click", function () {
-    $q.value = ""; $d.value = ""; render(); $q.focus();
+    $q.value = ""; $d.value = ""; mode = null; resetAndRender(); $q.focus();
   });
 
   if ("serviceWorker" in navigator) {
