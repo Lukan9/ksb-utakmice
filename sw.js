@@ -1,4 +1,4 @@
-const CACHE = "ksb-v1";
+const CACHE = "ksb-v3";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -32,3 +32,4 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(caches.match(e.request).then((r) => r || fetch(e.request)));
   }
 });
+
