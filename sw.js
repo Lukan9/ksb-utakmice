@@ -1,4 +1,4 @@
-const CACHE = "ksb-v3";
+const CACHE = "ksb-v4";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png"];
 
 self.addEventListener("install", (e) => {
@@ -13,12 +13,14 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// Podaci (utakmice.json): prvo mreža, pa keš ako nema interneta.
+// Podaci i stranica (utakmice.json, index.html): prvo mreža, pa keš ako nema interneta.
 // Ostalo: prvo keš, pa mreža.
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
-  if (url.pathname.endsWith("utakmice.json")) {
+  const fresh = url.pathname.endsWith("utakmice.json") ||
+    url.pathname.endsWith("index.html") || url.pathname.endsWith("/");
+  if (fresh) {
     e.respondWith(
       fetch(e.request)
         .then((r) => {
