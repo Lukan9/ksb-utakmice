@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T19:56:16+00:00",
+  "updated": "2026-11-26T20:24:19+00:00",
   "matches": [
     {
       "id": "112803",
@@ -40508,8 +40508,8 @@
       "competition": "SEASON 2026/2027",
       "home": "KK Torlak",
       "away": "KK Borac Zemun",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "89",
+      "away_score": "92",
       "url": "https://www.ksb.rs/utakmica110836/",
       "time": "19:20"
     },
