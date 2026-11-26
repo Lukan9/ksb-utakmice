@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-26T20:24:19+00:00",
+  "updated": "2026-11-26T22:13:17+00:00",
   "matches": [
     {
       "id": "112803",
@@ -40514,6 +40514,16 @@
       "time": "19:20"
     },
     {
+      "id": "110570",
+      "date": "2026-11-26",
+      "competition": "пионири/Београдска лига У14",
+      "home": "КК Сфера 2",
+      "away": "КК Младост 2",
+      "home_score": "62",
+      "away_score": "45",
+      "url": "https://www.ksb.rs/utakmica110570/"
+    },
+    {
       "id": "109773",
       "date": "2026-11-26",
       "competition": "SEASON 2026/2027",
@@ -40530,8 +40540,8 @@
       "competition": "СЕЗОНА 2026/2027",
       "home": "КК Риверс БМ",
       "away": "ШКК Звездара",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "80",
+      "away_score": "75",
       "url": "https://www.ksb.rs/utakmica107532/",
       "time": "19:50"
     },
@@ -40541,8 +40551,8 @@
       "competition": "SEASON 2026/2027",
       "home": "KK Mondo Basket",
       "away": "KK Beko",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "27",
+      "away_score": "69",
       "url": "https://www.ksb.rs/utakmica107413/",
       "time": "20:45"
     },
@@ -41282,16 +41292,6 @@
       "time": "14:15"
     },
     {
-      "id": "110304",
-      "date": "2026-11-22",
-      "competition": "пионири/Београдска лига У14",
-      "home": "КК Беовук 72 - 3",
-      "away": "КК Горица",
-      "home_score": "79",
-      "away_score": "41",
-      "url": "https://www.ksb.rs/utakmica110304/"
-    },
-    {
       "id": "110303",
       "date": "2026-11-22",
       "competition": "SEASON 2026/2027",
@@ -41680,8 +41680,8 @@
       "competition": "SEASON 2026/2027",
       "home": "KK BB Basket (Mladenovac)",
       "away": "70 : 63",
-      "home_score": "70",
-      "away_score": "63",
+      "home_score": null,
+      "away_score": null,
       "url": "https://www.ksb.rs/utakmica108070/",
       "time": "18:30"
     },
