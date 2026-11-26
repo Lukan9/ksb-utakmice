@@ -64,6 +64,37 @@
   }
   button.clear:focus-visible { outline: 3px solid var(--key); border-radius: 4px; }
 
+  .tabs { display: flex; gap: 6px; margin-top: 10px; }
+  button.tab {
+    flex: 1; font: inherit; font-size: .88rem; padding: 8px 6px; cursor: pointer;
+    border-radius: 999px; border: 2px solid var(--maple-dark);
+    background: #fffaf0; color: var(--ink);
+  }
+  button.tab[aria-pressed="true"] { background: var(--night); color: #f6ead0; border-color: var(--night); }
+  button.tab:focus-visible { outline: 3px solid var(--key); outline-offset: 2px; }
+  .score.soon { background: var(--ball); color: #fff; font-size: 1.05rem; padding: 4px 9px; }
+
+  .actions { display: flex; align-items: center; gap: 4px; }
+  button.refresh {
+    font: inherit; font-size: .85rem; color: #fff; background: var(--key);
+    border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer;
+  }
+  button.refresh:active { opacity: .8; }
+  button.refresh:disabled { opacity: .6; }
+  button.refresh:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  li.item { position: relative; }
+  li.item a.match { padding-right: 52px; }
+  button.star {
+    position: absolute; top: 4px; right: 4px;
+    width: 44px; height: 44px; border: 0; background: none;
+    font-size: 1.6rem; line-height: 1; color: #a39a85; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  button.star.on { color: #e0a400; }
+  button.star:focus-visible { outline: 3px solid var(--key); border-radius: 8px; }
+  li.item.fav a.match { background: #fbf3d9; }
+
   main { padding: 12px 14px 40px; max-width: 760px; margin: 0 auto; }
   .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   a.match {
@@ -112,9 +143,17 @@
       <input id="d" type="text" inputmode="decimal" placeholder="20.11" autocomplete="off">
     </div>
   </div>
+  <div class="tabs" role="group" aria-label="Prikaz utakmica">
+    <button class="tab" type="button" data-mode="upcoming" aria-pressed="false">Predstojeće</button>
+    <button class="tab" type="button" data-mode="played" aria-pressed="false">Odigrane</button>
+    <button class="tab" type="button" data-mode="all" aria-pressed="false">Sve</button>
+  </div>
   <div class="meta">
     <span id="count"></span>
-    <button class="clear" id="clear" type="button">Obriši</button>
+    <div class="actions">
+      <button class="refresh" id="refresh" type="button">↻ Osveži</button>
+      <button class="clear" id="clear" type="button">Obriši</button>
+    </div>
   </div>
 </div>
 
@@ -151,6 +190,22 @@
   }
 
   var all = [];
+  var mode = null;   // "upcoming" | "played" | "all"; null = automatski izbor
+  function todayIso() {
+    var n = new Date();
+    return n.getFullYear() + "-" + String(n.getMonth() + 1).padStart(2, "0") + "-" + String(n.getDate()).padStart(2, "0");
+  }
+  function hasScore(m) {
+    return m.home_score !== null && m.home_score !== undefined && m.home_score !== "" &&
+           m.away_score !== null && m.away_score !== undefined && m.away_score !== "";
+  }
+  function isUpcoming(m) { return !hasScore(m) && m.date >= todayIso(); }
+  var FAV_KEY = "ksb-fav";
+  var favs = {};
+  try { favs = JSON.parse(localStorage.getItem(FAV_KEY) || "{}") || {}; } catch (e) { favs = {}; }
+  function saveFavs() {
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {}
+  }
   var $q = document.getElementById("q");
   var $d = document.getElementById("d");
   var $list = document.getElementById("list");
@@ -170,23 +225,35 @@
   }
 
   function card(m) {
-    var hasScore = m.home_score !== null && m.home_score !== "" && m.away_score !== null && m.away_score !== "";
-    var a = el("a", "match" + (hasScore ? "" : " pending"));
+    var scored = hasScore(m);
+    var soon = isUpcoming(m);
+    var a = el("a", "match" + (scored ? "" : " pending"));
     a.href = m.url;
     a.target = "_blank";
     a.rel = "noopener";
     var top = el("div", "top");
-    top.appendChild(el("span", "when", fmtDate(m.date)));
+    top.appendChild(el("span", "when", fmtDate(m.date) + (m.time ? " · " + m.time : "")));
     top.appendChild(el("span", "", m.competition));
     var teams = el("div", "teams");
     teams.appendChild(el("span", "team", m.home));
-    teams.appendChild(el("span", "score" + (hasScore ? "" : " none"),
-      hasScore ? m.home_score + ":" + m.away_score : "bez rezultata"));
+    teams.appendChild(el("span", "score" + (scored ? "" : (soon ? " soon" : " none")),
+      scored ? m.home_score + ":" + m.away_score : (soon ? (m.time || "uskoro") : "bez rezultata")));
     teams.appendChild(el("span", "team away", m.away));
     a.appendChild(top);
     a.appendChild(teams);
-    var li = el("li");
+    var isFav = !!favs[m.id];
+    var li = el("li", "item" + (isFav ? " fav" : ""));
     li.appendChild(a);
+    var star = el("button", "star" + (isFav ? " on" : ""), isFav ? "★" : "☆");
+    star.type = "button";
+    star.setAttribute("aria-label", isFav ? "Ukloni iz omiljenih" : "Dodaj u omiljene");
+    star.setAttribute("aria-pressed", isFav ? "true" : "false");
+    star.addEventListener("click", function () {
+      if (favs[m.id]) delete favs[m.id]; else favs[m.id] = 1;
+      saveFavs();
+      render();
+    });
+    li.appendChild(star);
     return li;
   }
 
@@ -203,7 +270,15 @@
     });
     var searching = tokens.length > 0 || date !== null || $d.value.trim() !== "";
 
+    var hasUpcoming = all.some(isUpcoming);
+    var activeMode = mode || (hasUpcoming ? "upcoming" : "played");
+    Array.prototype.forEach.call(document.querySelectorAll("button.tab"), function (b) {
+      b.setAttribute("aria-pressed", b.getAttribute("data-mode") === activeMode ? "true" : "false");
+    });
+
     var res = all.filter(function (m) {
+      if (activeMode === "upcoming" && !isUpcoming(m)) return false;
+      if (activeMode === "played" && isUpcoming(m)) return false;
       if (date) {
         var p = m.date.split("-");
         if (parseInt(p[2], 10) !== date.d || parseInt(p[1], 10) !== date.m) return false;
@@ -214,6 +289,16 @@
         for (var i = 0; i < tokens.length; i++) if (hay.indexOf(tokens[i]) === -1) return false;
       }
       return true;
+    });
+
+    function key(m) { return m.date + " " + (m.time || "99:99"); }
+    res = res.slice().sort(function (a, b) {
+      var fa = favs[a.id] ? 1 : 0, fb = favs[b.id] ? 1 : 0;
+      if (fa !== fb) return fb - fa;                       // omiljene prve
+      var ua = isUpcoming(a), ub = isUpcoming(b);
+      if (ua !== ub) return ua ? -1 : 1;                   // predstojeće pre odigranih
+      if (ua) return key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0;   // predstojeće: najbliže prve
+      return key(a) < key(b) ? 1 : key(a) > key(b) ? -1 : 0;           // odigrane: najnovije prve
     });
 
     var LIMIT = searching ? 100 : 30;
@@ -229,18 +314,25 @@
     } else if (!shown.length) {
       $count.textContent = "0 rezultata";
       $state.innerHTML = "";
-      $state.appendChild(el("strong", "", "Nema podudaranja"));
-      $state.appendChild(document.createTextNode("Probaj samo deo naziva (npr. „zvezda“) ili drugi datum (npr. 20.11)."));
+      if (activeMode === "upcoming" && !searching) {
+        $state.appendChild(el("strong", "", "Nema predstojećih utakmica u podacima"));
+        $state.appendChild(document.createTextNode("Tapni „Sve“ ili „Odigrane“. Raspored se dodaje kad ga KSB objavi."));
+      } else {
+        $state.appendChild(el("strong", "", "Nema podudaranja"));
+        $state.appendChild(document.createTextNode("Probaj samo deo naziva (npr. „zvezda“), drugi datum (npr. 20.11) ili drugi prikaz (Predstojeće / Odigrane / Sve)."));
+      }
     } else {
       $count.textContent = searching
         ? res.length + (res.length > LIMIT ? " rezultata (prikazano " + LIMIT + ")" : " rezultata")
-        : "Poslednje utakmice";
+        : (activeMode === "upcoming" ? "Predstojeće utakmice" : activeMode === "played" ? "Poslednje utakmice" : "Sve utakmice");
       $state.textContent = "";
     }
   }
 
-  function load() {
-    fetch("utakmice.json", { cache: "no-store" })
+  function load(manual) {
+    var $btn = document.getElementById("refresh");
+    if (manual) { $btn.disabled = true; $btn.textContent = "Osvežavam…"; }
+    fetch("utakmice.json?t=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.json(); })
       .then(function (data) {
         all = (data.matches || []).slice().sort(function (a, b) {
@@ -255,10 +347,18 @@
         render();
       })
       .catch(function () {
-        $state.textContent = "Ne mogu da učitam podatke. Proveri internet vezu.";
+        if (!all.length) $state.textContent = "Ne mogu da učitam podatke. Proveri internet vezu.";
+        else $count.textContent = "Osvežavanje nije uspelo";
+      })
+      .then(function () {
+        $btn.disabled = false; $btn.textContent = "↻ Osveži";
       });
   }
 
+  Array.prototype.forEach.call(document.querySelectorAll("button.tab"), function (b) {
+    b.addEventListener("click", function () { mode = b.getAttribute("data-mode"); render(); });
+  });
+  document.getElementById("refresh").addEventListener("click", function () { load(true); });
   $q.addEventListener("input", render);
   $d.addEventListener("input", render);
   document.getElementById("clear").addEventListener("click", function () {
@@ -270,7 +370,7 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     });
   }
-  load();
+  load(false);
 })();
 </script>
 </body>
