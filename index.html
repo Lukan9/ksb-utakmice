@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<title>KSB utakmice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18243a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KSB utakmice">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --maple: #ebd3a8;
+    --maple-dark: #d8b97f;
+    --card: #f8f0de;
+    --ink: #14213a;
+    --muted: #5d6679;
+    --key: #2c4a7a;
+    --ball: #c9581c;
+    --night: #18243a;
+    --font: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-num: "Arial Narrow", "Roboto Condensed", "Helvetica Neue Condensed", Impact, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--font);
+    color: var(--ink);
+    background: var(--maple);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  header {
+    background: var(--night);
+    color: #f6ead0;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
+  }
+  header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: .01em; }
+  header p { margin: 2px 0 0; font-size: .82rem; color: #b9c3d6; }
+
+  .search {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--maple);
+    padding: 12px 14px 10px;
+    border-bottom: 2px solid var(--maple-dark);
+  }
+  .row { display: flex; gap: 8px; }
+  .field { flex: 1; min-width: 0; }
+  .field.date { flex: 0 0 38%; }
+  label { display: block; font-size: .78rem; color: var(--muted); margin: 0 0 3px 2px; }
+  input {
+    width: 100%; font: inherit; font-size: 1.05rem;
+    padding: 12px 12px; border-radius: 10px;
+    border: 2px solid var(--maple-dark); background: #fffaf0; color: var(--ink);
+  }
+  input:focus-visible { outline: 3px solid var(--key); outline-offset: 1px; border-color: var(--key); }
+  .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: .82rem; color: var(--muted); }
+  button.clear {
+    font: inherit; font-size: .85rem; color: var(--key); background: none;
+    border: 0; padding: 6px 4px; cursor: pointer; text-decoration: underline;
+  }
+  button.clear:focus-visible { outline: 3px solid var(--key); border-radius: 4px; }
+
+  main { padding: 12px 14px 40px; max-width: 760px; margin: 0 auto; }
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  a.match {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--card);
+    border-radius: 12px;
+    border-left: 6px solid var(--key);
+    padding: 10px 12px 12px;
+    box-shadow: 0 1px 0 rgba(20, 33, 58, .15);
+  }
+  a.match:active { background: #f1e5c9; }
+  a.match:focus-visible { outline: 3px solid var(--key); outline-offset: 2px; }
+  a.match.pending { border-left-color: var(--ball); }
+  .top { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; color: var(--muted); }
+  .top .when { font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; margin-top: 8px; }
+  .team { font-weight: 600; font-size: 1rem; line-height: 1.2; overflow-wrap: anywhere; }
+  .team.away { text-align: right; }
+  .score {
+    font-family: var(--font-num); font-weight: 700; font-size: 1.6rem;
+    background: var(--night); color: #f6ead0; padding: 2px 10px; border-radius: 8px;
+    white-space: nowrap; letter-spacing: .02em;
+  }
+  .score.none { font-size: .8rem; font-family: var(--font); font-weight: 600; background: var(--ball); color: #fff; padding: 5px 8px; }
+  .state { text-align: center; color: var(--muted); padding: 28px 10px; line-height: 1.5; }
+  .state strong { color: var(--ink); display: block; margin-bottom: 4px; }
+  @media (prefers-reduced-motion: no-preference) {
+    a.match { transition: background .15s; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>KSB utakmice</h1>
+  <p>Košarkaški savez Beograda · pretraga po ekipi i datumu</p>
+</header>
+
+<div class="search">
+  <div class="row">
+    <div class="field">
+      <label for="q">Ekipa ili utakmica</label>
+      <input id="q" type="search" placeholder="npr. zvezda partizan" autocomplete="off" autocapitalize="none" spellcheck="false">
+    </div>
+    <div class="field date">
+      <label for="d">Datum</label>
+      <input id="d" type="text" inputmode="decimal" placeholder="20.11" autocomplete="off">
+    </div>
+  </div>
+  <div class="meta">
+    <span id="count"></span>
+    <button class="clear" id="clear" type="button">Obriši</button>
+  </div>
+</div>
+
+<main>
+  <ul class="list" id="list" aria-live="polite"></ul>
+  <div class="state" id="state"></div>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // Ćirilica -> latinica, bez dijakritika, da "zvezda" nađe "Звезда"
+  var MAP = {
+    "а":"a","б":"b","в":"v","г":"g","д":"d","ђ":"dj","е":"e","ж":"z","з":"z","и":"i","ј":"j",
+    "к":"k","л":"l","љ":"lj","м":"m","н":"n","њ":"nj","о":"o","п":"p","р":"r","с":"s","т":"t",
+    "ћ":"c","у":"u","ф":"f","х":"h","ц":"c","ч":"c","џ":"dz","ш":"s","đ":"dj"
+  };
+  function norm(s) {
+    s = String(s || "").toLowerCase();
+    var out = "";
+    for (var i = 0; i < s.length; i++) out += (MAP[s[i]] !== undefined ? MAP[s[i]] : s[i]);
+    return out.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+  }
+
+  var DATE_RE = /(\d{1,2})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{2,4}))?\.?/;
+
+  function parseDate(text) {
+    var m = String(text || "").match(DATE_RE);
+    if (!m) return null;
+    var y = m[3] ? parseInt(m[3], 10) : null;
+    if (y !== null && y < 100) y += 2000;
+    return { d: parseInt(m[1], 10), m: parseInt(m[2], 10), y: y, raw: m[0] };
+  }
+
+  var all = [];
+  var $q = document.getElementById("q");
+  var $d = document.getElementById("d");
+  var $list = document.getElementById("list");
+  var $state = document.getElementById("state");
+  var $count = document.getElementById("count");
+
+  function fmtDate(iso) {
+    var p = iso.split("-");
+    return p[2] + "." + p[1] + "." + p[0] + ".";
+  }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function card(m) {
+    var hasScore = m.home_score !== null && m.home_score !== "" && m.away_score !== null && m.away_score !== "";
+    var a = el("a", "match" + (hasScore ? "" : " pending"));
+    a.href = m.url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    var top = el("div", "top");
+    top.appendChild(el("span", "when", fmtDate(m.date)));
+    top.appendChild(el("span", "", m.competition));
+    var teams = el("div", "teams");
+    teams.appendChild(el("span", "team", m.home));
+    teams.appendChild(el("span", "score" + (hasScore ? "" : " none"),
+      hasScore ? m.home_score + ":" + m.away_score : "bez rezultata"));
+    teams.appendChild(el("span", "team away", m.away));
+    a.appendChild(top);
+    a.appendChild(teams);
+    var li = el("li");
+    li.appendChild(a);
+    return li;
+  }
+
+  function render() {
+    var text = $q.value;
+    var date = parseDate($d.value);
+    // datum se može ukucati i u polje za ekipe: "zvezda partizan 20.11"
+    if (!date) {
+      var inline = parseDate(text);
+      if (inline) { date = inline; text = text.replace(inline.raw, " "); }
+    }
+    var tokens = norm(text).split(" ").filter(function (t) {
+      return t && t !== "vs" && t !== "-" && t !== "protiv";
+    });
+    var searching = tokens.length > 0 || date !== null || $d.value.trim() !== "";
+
+    var res = all.filter(function (m) {
+      if (date) {
+        var p = m.date.split("-");
+        if (parseInt(p[2], 10) !== date.d || parseInt(p[1], 10) !== date.m) return false;
+        if (date.y !== null && parseInt(p[0], 10) !== date.y) return false;
+      }
+      if (tokens.length) {
+        var hay = norm(m.home + " " + m.away + " " + m.competition);
+        for (var i = 0; i < tokens.length; i++) if (hay.indexOf(tokens[i]) === -1) return false;
+      }
+      return true;
+    });
+
+    var LIMIT = searching ? 100 : 30;
+    var shown = res.slice(0, LIMIT);
+    $list.textContent = "";
+    shown.forEach(function (m) { $list.appendChild(card(m)); });
+
+    if (!all.length) {
+      $count.textContent = "";
+      $state.innerHTML = "";
+      $state.appendChild(el("strong", "", "Podaci još nisu učitani"));
+      $state.appendChild(document.createTextNode("Pokreni osvežavanje na GitHub-u (Actions → Osvezi utakmice → Run workflow)."));
+    } else if (!shown.length) {
+      $count.textContent = "0 rezultata";
+      $state.innerHTML = "";
+      $state.appendChild(el("strong", "", "Nema podudaranja"));
+      $state.appendChild(document.createTextNode("Probaj samo deo naziva (npr. „zvezda“) ili drugi datum (npr. 20.11)."));
+    } else {
+      $count.textContent = searching
+        ? res.length + (res.length > LIMIT ? " rezultata (prikazano " + LIMIT + ")" : " rezultata")
+        : "Poslednje utakmice";
+      $state.textContent = "";
+    }
+  }
+
+  function load() {
+    fetch("utakmice.json", { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        all = (data.matches || []).slice().sort(function (a, b) {
+          return a.date < b.date ? 1 : a.date > b.date ? -1 : 0;
+        });
+        if (data.updated) {
+          var dt = new Date(data.updated);
+          document.querySelector("header p").textContent =
+            "Osveženo " + dt.toLocaleString("sr-Latn-RS", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" }) +
+            " · " + all.length + " utakmica";
+        }
+        render();
+      })
+      .catch(function () {
+        $state.textContent = "Ne mogu da učitam podatke. Proveri internet vezu.";
+      });
+  }
+
+  $q.addEventListener("input", render);
+  $d.addEventListener("input", render);
+  document.getElementById("clear").addEventListener("click", function () {
+    $q.value = ""; $d.value = ""; render(); $q.focus();
+  });
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    });
+  }
+  load();
+})();
+</script>
+</body>
+</html>

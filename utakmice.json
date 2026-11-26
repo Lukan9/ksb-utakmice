@@ -1,0 +1,125 @@
+{
+ "updated": null,
+ "matches": [
+  {
+   "id": "107536",
+   "date": "2026-11-25",
+   "competition": "омладинци/Регионална лига",
+   "home": "КК Визура",
+   "away": "КК Беостајл",
+   "home_score": "73",
+   "away_score": "70",
+   "url": "https://www.ksb.rs/utakmica107536/"
+  },
+  {
+   "id": "106883",
+   "date": "2026-11-25",
+   "competition": "пионирке/Београдска лига",
+   "home": "ЖКК Сопот",
+   "away": "КЖК Партизан 1953 - 2",
+   "home_score": "38",
+   "away_score": "60",
+   "url": "https://www.ksb.rs/utakmica106883/"
+  },
+  {
+   "id": "106388",
+   "date": "2026-11-25",
+   "competition": "пионири/Квалитетна лига У15",
+   "home": "ШКК Звездара",
+   "away": "КК Бањица Мега",
+   "home_score": "61",
+   "away_score": "92",
+   "url": "https://www.ksb.rs/utakmica106388/"
+  },
+  {
+   "id": "106387",
+   "date": "2026-11-25",
+   "competition": "пионири/Квалитетна лига У15",
+   "home": "КК Беовук 72",
+   "away": "КК Партизан",
+   "home_score": "61",
+   "away_score": "62",
+   "url": "https://www.ksb.rs/utakmica106387/"
+  },
+  {
+   "id": "106382",
+   "date": "2026-11-25",
+   "competition": "пионири/Квалитетна лига У15",
+   "home": "КК Чубура",
+   "away": "КК Реал Београд",
+   "home_score": "91",
+   "away_score": "61",
+   "url": "https://www.ksb.rs/utakmica106382/"
+  },
+  {
+   "id": "106543",
+   "date": "2026-11-24",
+   "competition": "млађи пионири/Регионална лига У13",
+   "home": "ОКК Београд",
+   "away": "КК Црвена Звезда",
+   "home_score": "43",
+   "away_score": "48",
+   "url": "https://www.ksb.rs/utakmica106543/"
+  },
+  {
+   "id": "106386",
+   "date": "2026-11-24",
+   "competition": "пионири/Квалитетна лига У15",
+   "home": "КК Визура",
+   "away": "КК Црвена Звезда",
+   "home_score": "67",
+   "away_score": "88",
+   "url": "https://www.ksb.rs/utakmica106386/"
+  },
+  {
+   "id": "106021",
+   "date": "2026-11-24",
+   "competition": "сениори/1МРЛ Центар",
+   "home": "КК Раднички (Обреновац)",
+   "away": "КК Торлак ОКК Београд",
+   "home_score": "93",
+   "away_score": "92",
+   "url": "https://www.ksb.rs/utakmica106021/"
+  },
+  {
+   "id": "106029",
+   "date": "2026-11-23",
+   "competition": "сениори/1МРЛ Центар",
+   "home": "КК Рас",
+   "away": "КК Земун",
+   "home_score": "90",
+   "away_score": "88",
+   "url": "https://www.ksb.rs/utakmica106029/"
+  },
+  {
+   "id": "111178",
+   "date": "2026-11-22",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "КК Земун 2",
+   "away": "КК Црвена Звезда 2",
+   "home_score": "26",
+   "away_score": "114",
+   "url": "https://www.ksb.rs/utakmica111178/"
+  },
+  {
+   "id": "107025",
+   "date": "2026-11-22",
+   "competition": "кадеткиње/Београдска лига",
+   "home": "ККЖ Раднички",
+   "away": "ККЖ Црвена Звезда 2",
+   "home_score": "63",
+   "away_score": "65",
+   "url": "https://www.ksb.rs/utakmica107025/"
+  },
+  {
+   "id": "106389",
+   "date": "2026-11-22",
+   "competition": "пионири/Квалитетна лига У15",
+   "home": "КК Реал Београд",
+   "away": "КК Ас Баскет",
+   "home_score": "56",
+   "away_score": "50",
+   "url": "https://www.ksb.rs/utakmica106389/"
+  }
+ ]
+}
