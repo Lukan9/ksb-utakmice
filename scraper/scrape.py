@@ -874,16 +874,27 @@ def main():
     print("Pronadjene utakmice:", len(found))
     print("Broj gresaka:", errors)
 
-    if fetched == 0:
-        print("Nijedna stranica nije preuzeta.")
-        print("Postojeci podaci ostaju sacuvani.")
+    if fetched == 0 or not found:
+        print("Nijedna stranica/utakmica nije preuzeta.")
+        print("Postojeci podaci ostaju sacuvani (nista nije obrisano).")
         sys.exit(1)
 
-    for mid, match in found.items():
-        old[mid] = merge_match(old.get(mid), match)
+    # ZASTITA: ako je neka stranica pala i dobili smo mnogo manje utakmica
+    # nego prosli put, ne brisemo stare podatke (da sajt ne ostane prazan).
+    if errors > 0 and old and len(found) < len(old) * 0.5:
+        print(
+            f"Preuzeto samo {len(found)} utakmica (ranije {len(old)}) "
+            f"uz {errors} gresaka."
+        )
+        print("Postojeci podaci ostaju sacuvani (nista nije obrisano).")
+        sys.exit(1)
+
+    # Stari podaci se NE zadrzavaju: JSON je tacna slika sajta
+    # iz upravo zavrsenog preuzimanja.
+    print(f"Brisem stare podatke ({len(old)}), upisujem nove ({len(found)}).")
 
     merged = sorted(
-        dedupe(list(old.values())),
+        dedupe(list(found.values())),
         key=lambda m: (m.get("date", ""), str(m.get("id", ""))),
         reverse=True,
     )[:MAX_MATCHES]
