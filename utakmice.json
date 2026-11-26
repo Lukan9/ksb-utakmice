@@ -1,6 +1,36 @@
 {
- "updated": null,
+ "updated": "2026-11-26T17:27:16+00:00",
  "matches": [
+  {
+   "id": "110432",
+   "date": "2026-11-25",
+   "competition": "пионири/Београдска лига У14",
+   "home": "БКК Раднички 2",
+   "away": "КК Елите Баскет",
+   "home_score": "41",
+   "away_score": "38",
+   "url": "https://www.ksb.rs/utakmica110432/"
+  },
+  {
+   "id": "108986",
+   "date": "2026-11-25",
+   "competition": "млађи пионири/Београдска лига У12",
+   "home": "КК ИБЦ",
+   "away": "КК Бањица Мега",
+   "home_score": "67",
+   "away_score": "25",
+   "url": "https://www.ksb.rs/utakmica108986/"
+  },
+  {
+   "id": "107546",
+   "date": "2026-11-25",
+   "competition": "омладинци/Регионална лига",
+   "home": "КК Борац Земун",
+   "away": "ШКК Звездара",
+   "home_score": "80",
+   "away_score": "79",
+   "url": "https://www.ksb.rs/utakmica107546/"
+  },
   {
    "id": "107536",
    "date": "2026-11-25",
@@ -10,6 +40,16 @@
    "home_score": "73",
    "away_score": "70",
    "url": "https://www.ksb.rs/utakmica107536/"
+  },
+  {
+   "id": "106892",
+   "date": "2026-11-25",
+   "competition": "пионирке/Београдска лига",
+   "home": "ЖКК Рипањ",
+   "away": "ЖКК Рас 2",
+   "home_score": "67",
+   "away_score": "58",
+   "url": "https://www.ksb.rs/utakmica106892/"
   },
   {
    "id": "106883",
@@ -52,6 +92,96 @@
    "url": "https://www.ksb.rs/utakmica106382/"
   },
   {
+   "id": "111439",
+   "date": "2026-11-24",
+   "competition": "јуниори/Београдска лига",
+   "home": "ОКК Гроцка",
+   "away": "КК Змај",
+   "home_score": "41",
+   "away_score": "51",
+   "url": "https://www.ksb.rs/utakmica111439/"
+  },
+  {
+   "id": "111349",
+   "date": "2026-11-24",
+   "competition": "јуниори/Београдска лига",
+   "home": "КК Беко Basketball Котеж 2",
+   "away": "КК Рудар 22",
+   "home_score": "53",
+   "away_score": "77",
+   "url": "https://www.ksb.rs/utakmica111349/"
+  },
+  {
+   "id": "111016",
+   "date": "2026-11-24",
+   "competition": "кадети/Квалитетна лига",
+   "home": "ОКК Београд",
+   "away": "КК Еко Спорт Ребрача",
+   "home_score": "77",
+   "away_score": "61",
+   "url": "https://www.ksb.rs/utakmica111016/"
+  },
+  {
+   "id": "108462",
+   "date": "2026-11-24",
+   "competition": "млађи пионири/1. Београдска лига У13",
+   "home": "КК Беко",
+   "away": "КК Сурчин Добановци",
+   "home_score": "32",
+   "away_score": "17",
+   "url": "https://www.ksb.rs/utakmica108462/"
+  },
+  {
+   "id": "107547",
+   "date": "2026-11-24",
+   "competition": "омладинци/Регионална лига",
+   "home": "КК Церак",
+   "away": "КК Рас",
+   "home_score": "45",
+   "away_score": "49",
+   "url": "https://www.ksb.rs/utakmica107547/"
+  },
+  {
+   "id": "107543",
+   "date": "2026-11-24",
+   "competition": "омладинци/Регионална лига",
+   "home": "КК Реал Београд",
+   "away": "КК Еко Спорт",
+   "home_score": "59",
+   "away_score": "69",
+   "url": "https://www.ksb.rs/utakmica107543/"
+  },
+  {
+   "id": "107146",
+   "date": "2026-11-24",
+   "competition": "јуниорке/Квалитетна лига",
+   "home": "ЖКК Карабурма",
+   "away": "ЖКК Кораћ Академија 011",
+   "home_score": "54",
+   "away_score": "77",
+   "url": "https://www.ksb.rs/utakmica107146/"
+  },
+  {
+   "id": "107022",
+   "date": "2026-11-24",
+   "competition": "кадеткиње/Београдска лига",
+   "home": "ЖКК Борча",
+   "away": "ЖКК Рудар 22",
+   "home_score": "64",
+   "away_score": "46",
+   "url": "https://www.ksb.rs/utakmica107022/"
+  },
+  {
+   "id": "106891",
+   "date": "2026-11-24",
+   "competition": "пионирке/Београдска лига",
+   "home": "ЖКК Миљаковац 3",
+   "away": "ЖКК Карабурма",
+   "home_score": "43",
+   "away_score": "50",
+   "url": "https://www.ksb.rs/utakmica106891/"
+  },
+  {
    "id": "106543",
    "date": "2026-11-24",
    "competition": "млађи пионири/Регионална лига У13",
@@ -82,6 +212,146 @@
    "url": "https://www.ksb.rs/utakmica106021/"
   },
   {
+   "id": "111348",
+   "date": "2026-11-23",
+   "competition": "јуниори/Београдска лига",
+   "home": "КК Еко Спорт",
+   "away": "КК Борац Земун 2",
+   "home_score": "80",
+   "away_score": "66",
+   "url": "https://www.ksb.rs/utakmica111348/"
+  },
+  {
+   "id": "111219",
+   "date": "2026-11-23",
+   "competition": "јуниори/Регионална лига",
+   "home": "КК Сурчин Добановци",
+   "away": "КК Победник 011",
+   "home_score": "60",
+   "away_score": "43",
+   "url": "https://www.ksb.rs/utakmica111219/"
+  },
+  {
+   "id": "111213",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "КК Риверс БМ",
+   "away": "КК Планет Баскет",
+   "home_score": "75",
+   "away_score": "55",
+   "url": "https://www.ksb.rs/utakmica111213/"
+  },
+  {
+   "id": "111208",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "ОКК Београд 3",
+   "away": "КК Церак",
+   "home_score": "39",
+   "away_score": "63",
+   "url": "https://www.ksb.rs/utakmica111208/"
+  },
+  {
+   "id": "111207",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "КК Победник 011",
+   "away": "КК Чукарички Баскет",
+   "home_score": "69",
+   "away_score": "42",
+   "url": "https://www.ksb.rs/utakmica111207/"
+  },
+  {
+   "id": "111177",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "КК Визура 3",
+   "away": "КК Врчин",
+   "home_score": "92",
+   "away_score": "57",
+   "url": "https://www.ksb.rs/utakmica111177/"
+  },
+  {
+   "id": "111171",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "КК Младост",
+   "away": "КК Мега Супер 2",
+   "home_score": "60",
+   "away_score": "84",
+   "url": "https://www.ksb.rs/utakmica111171/"
+  },
+  {
+   "id": "111146",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "ОКК Београд 4",
+   "away": "КК Нови Београд 7",
+   "home_score": "78",
+   "away_score": "45",
+   "url": "https://www.ksb.rs/utakmica111146/"
+  },
+  {
+   "id": "111022",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалитетна лига",
+   "home": "КК Бежанијска Коса",
+   "away": "КК Еко Спорт Ребрача",
+   "home_score": "66",
+   "away_score": "67",
+   "url": "https://www.ksb.rs/utakmica111022/"
+  },
+  {
+   "id": "111017",
+   "date": "2026-11-23",
+   "competition": "кадети/Квалитетна лига",
+   "home": "КК Беовук 72",
+   "away": "КК Земун",
+   "home_score": "72",
+   "away_score": "57",
+   "url": "https://www.ksb.rs/utakmica111017/"
+  },
+  {
+   "id": "107406",
+   "date": "2026-11-23",
+   "competition": "пионири/Регионална лига У15",
+   "home": "КК Колубара ЛА 2003",
+   "away": "Кошаркашка Академија Ребрача",
+   "home_score": "80",
+   "away_score": "67",
+   "url": "https://www.ksb.rs/utakmica107406/"
+  },
+  {
+   "id": "106889",
+   "date": "2026-11-23",
+   "competition": "пионирке/Београдска лига",
+   "home": "ЖКК Змај",
+   "away": "ЖКК Церак",
+   "home_score": "47",
+   "away_score": "37",
+   "url": "https://www.ksb.rs/utakmica106889/"
+  },
+  {
+   "id": "106545",
+   "date": "2026-11-23",
+   "competition": "млађи пионири/Регионална лига У13",
+   "home": "БКК Раднички",
+   "away": "КК Динамик БГ",
+   "home_score": "61",
+   "away_score": "44",
+   "url": "https://www.ksb.rs/utakmica106545/"
+  },
+  {
+   "id": "106200",
+   "date": "2026-11-23",
+   "competition": "сениори/2МРЛ Центар",
+   "home": "КК Флеш",
+   "away": "КК Борча",
+   "home_score": "62",
+   "away_score": "71",
+   "url": "https://www.ksb.rs/utakmica106200/"
+  },
+  {
    "id": "106029",
    "date": "2026-11-23",
    "competition": "сениори/1МРЛ Центар",
@@ -92,6 +362,36 @@
    "url": "https://www.ksb.rs/utakmica106029/"
   },
   {
+   "id": "106028",
+   "date": "2026-11-23",
+   "competition": "сениори/1МРЛ Центар",
+   "home": "КК Барајево",
+   "away": "КК Барајево Бамби",
+   "home_score": "71",
+   "away_score": "59",
+   "url": "https://www.ksb.rs/utakmica106028/"
+  },
+  {
+   "id": "106025",
+   "date": "2026-11-23",
+   "competition": "сениори/1МРЛ Центар",
+   "home": "КК Бежанијска Коса",
+   "away": "КК Визура",
+   "home_score": "74",
+   "away_score": "70",
+   "url": "https://www.ksb.rs/utakmica106025/"
+  },
+  {
+   "id": "111350",
+   "date": "2026-11-22",
+   "competition": "јуниори/Београдска лига",
+   "home": "КК Ас Баскет",
+   "away": "КК Соко",
+   "home_score": "61",
+   "away_score": "66",
+   "url": "https://www.ksb.rs/utakmica111350/"
+  },
+  {
    "id": "111178",
    "date": "2026-11-22",
    "competition": "кадети/Квалификације за Регионалну лигу",
@@ -100,6 +400,76 @@
    "home_score": "26",
    "away_score": "114",
    "url": "https://www.ksb.rs/utakmica111178/"
+  },
+  {
+   "id": "111153",
+   "date": "2026-11-22",
+   "competition": "кадети/Квалификације за Регионалну лигу",
+   "home": "КК Беовук 72 - 2",
+   "away": "КК Див Баскет",
+   "home_score": "45",
+   "away_score": "54",
+   "url": "https://www.ksb.rs/utakmica111153/"
+  },
+  {
+   "id": "110304",
+   "date": "2026-11-22",
+   "competition": "пионири/Београдска лига У14",
+   "home": "КК Беовук 72 - 3",
+   "away": "КК Горица",
+   "home_score": "79",
+   "away_score": "41",
+   "url": "https://www.ksb.rs/utakmica110304/"
+  },
+  {
+   "id": "109779",
+   "date": "2026-11-22",
+   "competition": "млађи пионири/2. Београдска лига У13",
+   "home": "КК Миљаковац 3",
+   "away": "КК Беко 4",
+   "home_score": "10",
+   "away_score": "49",
+   "url": "https://www.ksb.rs/utakmica109779/"
+  },
+  {
+   "id": "109647",
+   "date": "2026-11-22",
+   "competition": "млађи пионири/2. Београдска лига У13",
+   "home": "КК Див Баскет 3",
+   "away": "КК Мондо Баскет 2",
+   "home_score": "12",
+   "away_score": "50",
+   "url": "https://www.ksb.rs/utakmica109647/"
+  },
+  {
+   "id": "108853",
+   "date": "2026-11-22",
+   "competition": "млађи пионири/Београдска лига У12",
+   "home": "КК Вук",
+   "away": "КК Беко",
+   "home_score": "63",
+   "away_score": "39",
+   "url": "https://www.ksb.rs/utakmica108853/"
+  },
+  {
+   "id": "108070",
+   "date": "2026-11-22",
+   "competition": "пионири/Београдска лига У15",
+   "home": "КК ББ Баскет (Младеновац)",
+   "away": "КК Барајево Бамби",
+   "home_score": "70",
+   "away_score": "63",
+   "url": "https://www.ksb.rs/utakmica108070/"
+  },
+  {
+   "id": "107282",
+   "date": "2026-11-22",
+   "competition": "пионири/Регионална лига У15",
+   "home": "КК Беко 2",
+   "away": "КК Церак",
+   "home_score": "28",
+   "away_score": "72",
+   "url": "https://www.ksb.rs/utakmica107282/"
   },
   {
    "id": "107025",
@@ -120,6 +490,16 @@
    "home_score": "56",
    "away_score": "50",
    "url": "https://www.ksb.rs/utakmica106389/"
+  },
+  {
+   "id": "106024",
+   "date": "2026-11-22",
+   "competition": "сениори/1МРЛ Центар",
+   "home": "КК Беостајл",
+   "away": "КК Парагон (Лазаревац)",
+   "home_score": "50",
+   "away_score": "97",
+   "url": "https://www.ksb.rs/utakmica106024/"
   }
  ]
 }
