@@ -1,4 +1,3 @@
-
 import json
 import re
 import sys
@@ -29,6 +28,7 @@ TIMEOUT = 20
 MAX_MATCHES = 5000
 
 OUT = Path(__file__).resolve().parent.parent / "utakmice.json"
+DEBUG_DIR = Path(__file__).resolve().parent / "debug"
 
 HEADERS = {
     "User-Agent": (
@@ -42,17 +42,21 @@ HEADERS = {
 LINK_RE = re.compile(r"/utakmica/?(\d+)/?$")
 COMP_LINK_RE = re.compile(r"/(?:kup-)?takmicenje\d+/?")
 
-DATE_RE = re.compile(
-    r"\((\d+)\)\s*(\d{2})\.(\d{2})\.(\d{4})"
-)
+# "(12) 29.11.2026" ili "(12) 29.11.2026 18:00"
+DATE_RE = re.compile(r"\((\d+)\)\s*(\d{1,2})\.(\d{1,2})\.(\d{4})")
 
-ANY_DATE_RE = re.compile(
-    r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})"
-)
+ANY_DATE_RE = re.compile(r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})")
 
-TIME_RE = re.compile(
-    r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b"
-)
+TIME_RE = re.compile(r"(?<!\d)([01]?\d|2[0-3])[:.]([0-5]\d)(?!\d)")
+TIME_FULL_RE = re.compile(r"([01]?\d|2[0-3])[:.]([0-5]\d)")
+
+SCORE_PAIR_RE = re.compile(r"(\d{1,3})\s*[:\-]\s*(\d{1,3})")
+DIGITS_RE = re.compile(r"\d{1,3}")
+DASH_RE = re.compile(r"[-–—:]+")
+
+# Tekst koji NIJE ime ekipe (kolo, delegat, sudija...)
+ROUND_RE = re.compile(r"^\s*\d+\.?\s*(kolo|коло)\b", re.IGNORECASE)
+BAD_WORDS = ("delegate", "delegat", "делегат", "sudija", "судија", "referee")
 
 
 # ============================================================
@@ -66,11 +70,7 @@ SESSION.headers.update(HEADERS)
 def fetch(url):
     response = SESSION.get(url, timeout=TIMEOUT)
     response.raise_for_status()
-
-    response.encoding = (
-        response.apparent_encoding or "utf-8"
-    )
-
+    response.encoding = response.apparent_encoding or "utf-8"
     return response.text
 
 
@@ -91,47 +91,71 @@ def valid_date(day, month, year):
 
 def extract_date(text):
     match = ANY_DATE_RE.search(text)
-
     if not match:
         return None
-
-    day = int(match.group(1))
-    month = int(match.group(2))
-    year = int(match.group(3))
-
+    day, month, year = (int(match.group(i)) for i in (1, 2, 3))
     if not 2020 <= year <= 2035:
         return None
-
     return valid_date(day, month, year)
 
 
-def extract_time(text):
-    match = TIME_RE.search(text)
-
+def extract_time_after_date(text):
+    """Vreme trazimo SAMO odmah iza datuma (inace hvata sitne brojeve)."""
+    match = ANY_DATE_RE.search(text)
     if not match:
         return None
+    rest = text[match.end():match.end() + 12]
+    t = TIME_RE.search(rest)
+    if not t:
+        return None
+    return f"{int(t.group(1)):02d}:{t.group(2)}"
 
-    return (
-        f"{int(match.group(1)):02d}:"
-        f"{match.group(2)}"
-    )
+
+def is_bad_team(name):
+    if not name:
+        return True
+    low = name.lower()
+    if ROUND_RE.match(name):
+        return True
+    if any(word in low for word in BAD_WORDS):
+        return True
+    if DASH_RE.fullmatch(name.strip()):
+        return True
+    if TIME_FULL_RE.fullmatch(name.strip()):
+        return True
+    if DIGITS_RE.fullmatch(name.strip()):
+        return True
+    return False
 
 
 def extract_match_ids(soup):
     found = {}
-
     for anchor in soup.find_all("a", href=True):
         match = LINK_RE.search(anchor["href"])
-
         if match:
-            mid = match.group(1)
-            found.setdefault(mid, []).append(anchor)
-
+            found.setdefault(match.group(1), []).append(anchor)
     return found
 
 
+def build_item(mid, date, competition, home, away, hs, as_, mtime):
+    item = {
+        "id": mid,
+        "date": date.strftime("%Y-%m-%d"),
+        "competition": competition or "",
+        "home": home,
+        "away": away,
+        "home_score": hs,
+        "away_score": as_,
+        "url": f"https://www.ksb.rs/utakmica{mid}/",
+    }
+    if mtime:
+        item["time"] = mtime
+    return item
+
+
 # ============================================================
-# PARSER 1 - POZNATI FORMAT
+# PARSER 1 - POCETNA STRANICA (tekst unutar <a> linka utakmice)
+# Radi i za odigrane i za NAJAVLJENE utakmice.
 # ============================================================
 
 def parse_standard(html):
@@ -141,15 +165,17 @@ def parse_standard(html):
 
     for anchor in soup.find_all("a", href=True):
         match = LINK_RE.search(anchor["href"])
-
         if not match:
             continue
 
         mid = match.group(1)
-        text = normalize(anchor.get_text(" ", strip=True))
 
-        if text:
-            groups.setdefault(mid, []).append(text)
+        # Svi tekstualni delovi unutar linka (ne spaja ih u jedan string)
+        parts = [normalize(s) for s in anchor.stripped_strings]
+        parts = [p for p in parts if p]
+
+        if parts:
+            groups.setdefault(mid, []).extend(parts)
 
     output = []
 
@@ -159,11 +185,10 @@ def parse_standard(html):
         date_match = None
 
         for index, text in enumerate(texts):
-            match = DATE_RE.search(text)
-
-            if match:
+            m = DATE_RE.search(text)
+            if m:
                 date_index = index
-                date_match = match
+                date_match = m
                 break
 
         if date_index is None:
@@ -174,46 +199,71 @@ def parse_standard(html):
         year = int(date_match.group(4))
 
         parsed_date = valid_date(day, month, year)
-
         if not parsed_date:
             continue
 
+        # vreme moze biti u istom tekstu kao datum ("... 29.11.2026 18:00")
+        same_text = texts[date_index][date_match.end():]
+        mtime = None
+        t = TIME_RE.search(same_text[:12])
+        if t:
+            mtime = f"{int(t.group(1)):02d}:{t.group(2)}"
+
         rest = texts[date_index + 1:]
 
-        if len(rest) < 3:
+        competition = None
+        names = []
+        scores = []
+
+        for value in rest:
+            v = value.strip()
+
+            # vreme (samostalno)
+            tm = TIME_FULL_RE.fullmatch(v)
+            if tm:
+                if not mtime:
+                    mtime = f"{int(tm.group(1)):02d}:{tm.group(2)}"
+                continue
+
+            # crtica / dve tacke
+            if DASH_RE.fullmatch(v):
+                continue
+
+            # samostalan rezultat "75" ili "75:68"
+            if DIGITS_RE.fullmatch(v):
+                scores.append(v)
+                continue
+
+            pair = SCORE_PAIR_RE.fullmatch(v)
+            if pair:
+                scores.extend([pair.group(1), pair.group(2)])
+                continue
+
+            if competition is None:
+                competition = v
+                continue
+
+            names.append(v)
+
+        # ocisti: samo prave ekipe
+        names = [n for n in names if not is_bad_team(n)]
+
+        if len(names) < 2:
             continue
 
-        competition = rest[0]
-        parts = rest[1:]
+        home, away = names[0], names[1]
 
-        home = parts[0]
-        away = None
-        home_score = None
-        away_score = None
-
-        if len(parts) >= 4:
-            home_score = parts[1]
-            away = parts[2]
-            away_score = parts[3]
-
-        elif len(parts) >= 2:
-            away = parts[1]
-
-        if not away:
+        if home == away:
             continue
 
-        item = {
-            "id": mid,
-            "date": parsed_date.strftime("%Y-%m-%d"),
-            "competition": competition,
-            "home": home,
-            "away": away,
-            "home_score": home_score,
-            "away_score": away_score,
-            "url": f"https://www.ksb.rs/utakmica{mid}/",
-        }
+        home_score = away_score = None
+        if len(scores) >= 2:
+            home_score, away_score = scores[0], scores[1]
 
-        output.append(item)
+        output.append(
+            build_item(mid, parsed_date, competition, home, away,
+                       home_score, away_score, mtime)
+        )
 
     return output
 
@@ -223,29 +273,22 @@ def parse_standard(html):
 # ============================================================
 
 def parse_generic(html):
-
     soup = BeautifulSoup(html, "html.parser")
 
     heading = soup.find(["h1", "h2", "h3"])
-
     page_comp = (
-        normalize(heading.get_text(" ", strip=True))
-        if heading else ""
+        normalize(heading.get_text(" ", strip=True)) if heading else ""
     )
 
     anchors = extract_match_ids(soup)
-
     output = []
 
     def ids_in(node):
         result = set()
-
-        for anchor in node.find_all("a", href=True):
-            match = LINK_RE.search(anchor["href"])
-
-            if match:
-                result.add(match.group(1))
-
+        for a in node.find_all("a", href=True):
+            m = LINK_RE.search(a["href"])
+            if m:
+                result.add(m.group(1))
         return result
 
     for mid, links in anchors.items():
@@ -254,107 +297,81 @@ def parse_generic(html):
         best = None
 
         for _ in range(10):
-
             parent = node.parent
-
             if parent is None:
                 break
-
             if parent.name in ("body", "html", "[document]"):
                 break
-
             if ids_in(parent) - {mid}:
                 break
-
             best = parent
             node = parent
 
         if best is None:
             continue
 
-        strings = [
-            normalize(value)
-            for value in best.stripped_strings
-        ]
-
-        strings = [value for value in strings if value]
-
+        strings = [normalize(v) for v in best.stripped_strings]
+        strings = [v for v in strings if v]
         blob = " | ".join(strings)
 
-        parsed_date = extract_date(blob)
+        # cela linija sa sudijama/delegatima -> preskoci
+        if any(w in blob.lower() for w in BAD_WORDS):
+            continue
 
+        parsed_date = extract_date(blob)
         if not parsed_date:
             continue
 
-        match_time = extract_time(blob)
+        mtime = extract_time_after_date(blob)
 
-        home = None
-        away = None
-
-        home_score = None
-        away_score = None
+        home = away = None
+        home_score = away_score = None
+        names = []
 
         for value in strings:
+            v = value.strip()
 
-            value = value.strip()
-
-            if ANY_DATE_RE.search(value):
+            if ANY_DATE_RE.search(v):
+                continue
+            if TIME_FULL_RE.fullmatch(v):
+                continue
+            if DASH_RE.fullmatch(v):
                 continue
 
-            if TIME_RE.fullmatch(value):
+            pair = re.fullmatch(r"(\d{1,3})\s*:\s*(\d{1,3})", v)
+            if pair:
+                home_score, away_score = pair.group(1), pair.group(2)
                 continue
 
-            # Rezultat zapisan kao 75:68
-            score = re.fullmatch(
-                r"(\d{1,3})\s*:\s*(\d{1,3})",
-                value
-            )
-
-            if score:
-                home_score = score.group(1)
-                away_score = score.group(2)
+            if DIGITS_RE.fullmatch(v):
                 continue
 
-            # Dve ekipe u istom elementu
-            if ":" in value:
-
-                parts = value.split(":", 1)
-
-                first = normalize(parts[0])
-                second = normalize(parts[1])
-
+            # "Ekipa A : Ekipa B" u istom elementu
+            if ":" in v:
+                first, second = (normalize(x) for x in v.split(":", 1))
                 if (
-                    first
-                    and second
-                    and not first.isdigit()
-                    and not second.isdigit()
-                    and not re.fullmatch(r"[\d\s:]+", value)
+                    first and second
+                    and not first.isdigit() and not second.isdigit()
+                    and not is_bad_team(first) and not is_bad_team(second)
                 ):
-                    home = first
-                    away = second
+                    home, away = first, second
                     break
+                continue
+
+            if not is_bad_team(v):
+                names.append(v)
 
         if not home or not away:
+            if len(names) >= 2:
+                home, away = names[0], names[1]
+
+        if not home or not away or home == away:
             continue
 
-        if home == away:
-            continue
-
-        item = {
-            "id": mid,
-            "date": parsed_date.strftime("%Y-%m-%d"),
-            "competition": page_comp,
-            "home": home,
-            "away": away,
-            "home_score": home_score,
-            "away_score": away_score,
-            "url": f"https://www.ksb.rs/utakmica{mid}/",
-        }
-
-        if match_time:
-            item["time"] = match_time
-
-        output.append(item)
+        output.append(
+            build_item(mid, parsed_date, page_comp, home, away,
+                       home_score, away_score, mtime)
+        )
 
     return output
 
@@ -364,26 +381,21 @@ def parse_generic(html):
 # ============================================================
 
 def parse_all(html):
-
     matches = {}
 
     for item in parse_standard(html):
         matches[item["id"]] = item
 
     for item in parse_generic(html):
-
         mid = item["id"]
 
         if mid not in matches:
             matches[mid] = item
-
         else:
             current = matches[mid]
-
             for key, value in item.items():
                 if value is not None and (
-                    current.get(key) is None
-                    or current.get(key) == ""
+                    current.get(key) is None or current.get(key) == ""
                 ):
                     current[key] = value
 
@@ -395,23 +407,18 @@ def parse_all(html):
 # ============================================================
 
 def competition_links(html, base):
-
     soup = BeautifulSoup(html, "html.parser")
-
     urls = []
 
     for anchor in soup.find_all("a", href=True):
-
         href = anchor["href"]
 
         if LINK_RE.search(href):
             continue
-
         if not COMP_LINK_RE.search(href):
             continue
 
         full = urljoin(base, href).split("#")[0]
-
         parsed = urlparse(full)
 
         if not parsed.netloc.endswith("ksb.rs"):
@@ -424,32 +431,47 @@ def competition_links(html, base):
 
 
 # ============================================================
-# UCITAVANJE STARIH PODATAKA
+# UCITAVANJE STARIH PODATAKA (+ ciscenje smeca iz ranijih pokretanja)
 # ============================================================
 
-def load_old():
+def is_garbage(match):
+    home = str(match.get("home", ""))
+    away = str(match.get("away", ""))
+    for name in (home, away):
+        if is_bad_team(name):
+            return True
+    # polovicno pocupana imena iz starog parsera
+    if away.strip().lower() in ("тел", "tel"):
+        return True
+    return False
 
+
+def load_old():
     if not OUT.exists():
         return {}
 
     try:
-
-        payload = json.loads(
-            OUT.read_text(encoding="utf-8")
-        )
-
+        payload = json.loads(OUT.read_text(encoding="utf-8"))
         matches = payload.get("matches", [])
 
-        return {
-            str(match["id"]): match
-            for match in matches
-            if match.get("id")
-        }
+        cleaned = {}
+        removed = 0
+
+        for match in matches:
+            if not match.get("id"):
+                continue
+            if is_garbage(match):
+                removed += 1
+                continue
+            cleaned[str(match["id"])] = match
+
+        if removed:
+            print(f"Uklonjeno starih neispravnih zapisa: {removed}")
+
+        return cleaned
 
     except Exception as error:
-
         print("GRESKA pri citanju starog JSON-a:", error)
-
         sys.exit(1)
 
 
@@ -458,22 +480,14 @@ def load_old():
 # ============================================================
 
 def merge_match(previous, current):
-
     if not previous:
         return current
 
     merged = previous.copy()
 
     for key, value in current.items():
-
         if value is None or value == "":
             continue
-
-        # Ne prepisuj postojeci rezultat praznim rezultatom
-        if key in ("home_score", "away_score"):
-            if value is None and previous.get(key) is not None:
-                continue
-
         merged[key] = value
 
     return merged
@@ -484,13 +498,11 @@ def merge_match(previous, current):
 # ============================================================
 
 def main():
-
     print("=" * 55)
     print("KSB SCRAPER - POKRETANJE")
     print("=" * 55)
 
     old = load_old()
-
     found = {}
 
     errors = 0
@@ -498,8 +510,9 @@ def main():
 
     queue = list(SOURCES)
     seen = set(SOURCES)
-
     index = 0
+
+    DEBUG_DIR.mkdir(exist_ok=True)
 
     while index < len(queue) and index < MAX_PAGES:
 
@@ -507,127 +520,97 @@ def main():
         index += 1
 
         try:
-
             print(f"\nPreuzimam: {url}")
-
             html = fetch(url)
-
             fetched += 1
+
+            # sacuvaj sirov HTML prvih stranica radi dijagnostike
+            if fetched <= 2:
+                (DEBUG_DIR / f"page{fetched}.html").write_text(
+                    html, encoding="utf-8"
+                )
 
             matches = parse_all(html)
 
-            upcoming = sum(
-                1 for match in matches
-                if match.get("home_score") is None
-            )
-
+            upcoming = sum(1 for m in matches if m.get("home_score") is None)
             print(
                 f"Pronadjeno: {len(matches)} utakmica | "
-                f"Bez rezultata: {upcoming}"
+                f"Najavljene (bez rezultata): {upcoming}"
             )
 
-            for match in matches:
-
-                mid = match["id"]
-
-                if mid not in found:
-                    found[mid] = match
-
-                else:
-                    found[mid] = merge_match(
-                        found[mid],
-                        match
+            # primeri najavljenih utakmica u logu
+            shown = 0
+            for m in matches:
+                if m.get("home_score") is None and shown < 3:
+                    print(
+                        f"   NAJAVA: {m['date']} {m.get('time', '--:--')} "
+                        f"{m['home']} - {m['away']} ({m['id']})"
                     )
+                    shown += 1
+
+            for match in matches:
+                mid = match["id"]
+                found[mid] = merge_match(found.get(mid), match)
 
             if DISCOVER:
-
-                links = competition_links(html, url)
-
-                for link in links:
-
+                for link in competition_links(html, url):
                     if link not in seen:
                         seen.add(link)
                         queue.append(link)
 
         except Exception as error:
-
             errors += 1
-
-            print(
-                f"GRESKA: {url} -> {error}"
-            )
+            print(f"GRESKA: {url} -> {error}")
 
         time.sleep(DELAY)
 
     print("\n" + "=" * 55)
     print("REZULTATI PREUZIMANJA")
     print("=" * 55)
-
     print("Preuzete stranice:", fetched)
     print("Pronadjene utakmice:", len(found))
     print("Broj gresaka:", errors)
 
     if fetched == 0:
-
         print("Nijedna stranica nije preuzeta.")
         print("Postojeci podaci ostaju sacuvani.")
-
         sys.exit(1)
 
-    # Spajanje starih i novih utakmica
     for mid, match in found.items():
+        old[mid] = merge_match(old.get(mid), match)
 
-        old[mid] = merge_match(
-            old.get(mid),
-            match
-        )
-
-    # Sortiranje po datumu
     merged = sorted(
         old.values(),
-        key=lambda match: (
-            match.get("date", ""),
-            str(match.get("id", ""))
-        ),
-        reverse=True
-    )
+        key=lambda m: (m.get("date", ""), str(m.get("id", ""))),
+        reverse=True,
+    )[:MAX_MATCHES]
 
-    merged = merged[:MAX_MATCHES]
+    today = datetime.now().strftime("%Y-%m-%d")
 
-    # Statistika
     upcoming = sum(
-        1 for match in merged
-        if match.get("date")
-        and match["date"] >= datetime.now().strftime("%Y-%m-%d")
-        and match.get("home_score") is None
+        1 for m in merged
+        if m.get("date") and m["date"] >= today
+        and m.get("home_score") is None
     )
 
     finished = sum(
-        1 for match in merged
-        if match.get("home_score") is not None
-        and match.get("away_score") is not None
+        1 for m in merged
+        if m.get("home_score") is not None and m.get("away_score") is not None
     )
 
     payload = {
-        "updated": datetime.now(timezone.utc).isoformat(
-            timespec="seconds"
-        ),
-        "matches": merged
+        "updated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "matches": merged,
     }
 
     OUT.write_text(
-        json.dumps(
-            payload,
-            ensure_ascii=False,
-            indent=2
-        ),
-        encoding="utf-8"
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
     print("\n" + "=" * 55)
     print("USPEH - JSON AZURIRAN")
     print("=" * 55)
-
     print("Ukupno utakmica:", len(merged))
     print("Buduce utakmice bez rezultata:", upcoming)
     print("Zavrsene utakmice sa rezultatom:", finished)
