@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T13:34:45+00:00",
+  "updated": "2026-11-27T15:16:47+00:00",
   "matches": [
     {
       "id": "112803",
@@ -37864,6 +37864,17 @@
       "time": "20:45"
     },
     {
+      "id": "111882",
+      "date": "2026-12-03",
+      "competition": "SEASON 2026/2027",
+      "home": "KK Cubura 2",
+      "away": "KK As Basket 2",
+      "home_score": null,
+      "away_score": null,
+      "url": "https://www.ksb.rs/utakmica111882/",
+      "time": "21:15"
+    },
+    {
       "id": "110181",
       "date": "2026-12-03",
       "competition": "SEASON 2026/2027",
@@ -38214,17 +38225,6 @@
       "away_score": null,
       "url": "https://www.ksb.rs/utakmica111883/",
       "time": "12:30"
-    },
-    {
-      "id": "111882",
-      "date": "2026-11-29",
-      "competition": "SEASON 2026/2027",
-      "home": "KK Cubura 2",
-      "away": "KK As Basket 2",
-      "home_score": null,
-      "away_score": null,
-      "url": "https://www.ksb.rs/utakmica111882/",
-      "time": "15:15"
     },
     {
       "id": "111751",
