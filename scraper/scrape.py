@@ -22,10 +22,10 @@ SOURCES = [
 
 DISCOVER = True
 
-MAX_PAGES = 250
+MAX_PAGES = 500
 DELAY = 0.5
 TIMEOUT = 20
-MAX_MATCHES = 5000
+MAX_MATCHES = 30000
 
 OUT = Path(__file__).resolve().parent.parent / "utakmice.json"
 DEBUG_DIR = Path(__file__).resolve().parent / "debug"
@@ -689,6 +689,10 @@ def competition_links(html, base):
 
         if LINK_RE.search(href):
             continue
+        # linkovi za promenu jezika (redirect.php?lang=...) NE smeju da se
+        # otvaraju: sajt posle toga prikazuje imena ekipa prazna/drugacija
+        if "redirect.php" in href or "lang=" in href:
+            continue
         if not COMP_LINK_RE.search(href):
             continue
 
@@ -918,7 +922,7 @@ def main():
     }
 
     OUT.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2),
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
     )
 
