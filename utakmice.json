@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T16:24:34+00:00",
+  "updated": "2026-11-27T18:06:46+00:00",
   "matches": [
     {
       "id": "112803",
@@ -40376,8 +40376,8 @@
       "competition": "SEASON 2026/2027",
       "home": "KK Mladost",
       "away": "KK Borac Zemun",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "71",
+      "away_score": "79",
       "url": "https://www.ksb.rs/functions/redirect.php?lang=eng&pageName=/kup-takmicenje484/",
       "time": "16:00"
     },
