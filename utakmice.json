@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27T12:15:45+00:00",
+  "updated": "2026-11-27T13:34:45+00:00",
   "matches": [
     {
       "id": "112803",
@@ -40813,8 +40813,8 @@
       "competition": "СЕЗОНА 2026/2027",
       "home": "ЖКК Кораћ Академија 011",
       "away": "ЖКК Визура",
-      "home_score": null,
-      "away_score": null,
+      "home_score": "38",
+      "away_score": "30",
       "url": "https://www.ksb.rs/utakmica106768/",
       "time": "21:20"
     },
